@@ -1,0 +1,140 @@
+---
+title: "INTP General Survey Analysis 2017"
+output: html_document
+---
+
+This was written for the [Being an INTP Facebook Page](https://facebook.com/INTP.info) by [Anne Dorko](https://www.annedorko.com).
+
+If you know your MBTI Personality type, you can contribute to the dataset by [completing the survey](https://anne274.typeform.com/to/ycfkp1). New survey submissions are regularly cleaned and fed through this analysis for the highest quality results. All numbers and reports below are based on the latest cleaned data.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Load libraries
+library("dplyr")
+library("ggplot2")
+library("scales")
+# Load in clean data (only use clean info!)
+survey <- read.csv("intp-general-survey-2017-CLEAN.csv", stringsAsFactors = FALSE)
+validTypes <- c( "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP",
+                 "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
+                 "ENFJ", "ENTJ")
+tableCaption <- paste( "Based on", length(survey$ID), "respondents at Facebook.com/intp.info" )
+
+# INTPs only
+surveyINTP <- filter(survey, Type == "INTP")
+```
+
+## General Information
+
+```{r echo=FALSE}
+# Set up information for latest calculations
+whoTook <- prop.table( table ( survey$Type ) )
+whoTookPercentage <- floor(whoTook['INTP'] * 100 )
+
+whoTookGender <- prop.table( table ( survey$GenderAssigned ) )
+whoTookGenderIdentity <- prop.table( table ( survey$GenderIdentity ) )
+```
+
+This data is primarily for fun, and cannot be considered scientific. That said, I have done my best to make the data as quantifiable as possible. This exercise has been more for the practice of data cleaning and analysis, and I like to share my work. 
+
+`r whoTookPercentage`% of the respondents were INTP, which is not represenative of the general popualation. Because of this, the otherwise general results are heavily weighted towards any INTP tendencies. Notes have been made through this page to let you know when INTPs have been completely isolated to run INTP-specific analysis. 
+
+You can also see that more females than males took this survey. We do not have enough data to determine whether this means INTPs are more likely to be women, as our sample is a convenience sample and not a true random sample.
+
+```{r echo=FALSE}
+sortGenderAssigned <- filter(survey, GenderAssigned != '')
+sortGenderIdentity <- filter(survey, GenderIdentity != '')
+
+ggplot( sortGenderAssigned, aes( x=reorder(GenderAssigned, GenderAssigned, function(x)-length(x)), y=(..count..)/sum(..count..) ) ) +
+  geom_bar() +
+  scale_x_discrete("Gender Assigned at Birth" ) +
+  scale_y_continuous("% of Respondents", labels=percent)
+
+ggplot( sortGenderIdentity, aes( x=reorder(GenderIdentity, GenderIdentity, function(x)-length(x)), y=(..count..)/sum(..count..) ) ) +
+  geom_bar() +
+  scale_x_discrete("Gender Identity" ) +
+  scale_y_continuous("% of Respondents", labels=percent)
+```
+
+It is also important to note that the majority of test takers were assigned their MBTI type through an online test or assigned it to themselves after reading through all 16 profiles. This means that our sample may or may not be 'true' INTPs (if such a thing exists). However, as this is only in good fun, for the sake of this study we will assume that the MBTI personality types are accurate.
+
+```{r echo=FALSE}
+ggplot( survey, aes( x=WhoAssignedType, y=(..count..)/sum(..count..), fill = WhoAssignedType) ) +
+  geom_bar() +
+  ggtitle( "MBTI Assignment Method", subtitle = "Who assigns our personality types?" ) +
+  scale_x_discrete("") +
+  scale_y_continuous("", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  guides(fill=FALSE) +
+  labs(caption=tableCaption)
+```
+
+## The Parents of an INTP
+
+```{r echo=FALSE}
+# Collection data for parents
+parent1 <- data.frame( surveyINTP$Parent1Type[surveyINTP$Parent1Type != ""], surveyINTP$Parent1Gender[surveyINTP$Parent1Type != ""], stringsAsFactors = FALSE )
+colnames( parent1 ) <- c( "Type", "Gender" )
+parent2 <- data.frame( surveyINTP$Parent2Type[surveyINTP$Parent2Type != ""], surveyINTP$Parent2Gender[surveyINTP$Parent2Type != ""], stringsAsFactors = FALSE )
+colnames( parent2 ) <- c( "Type", "Gender" )
+parents <- bind_rows( parent1, parent2 )
+
+femaleParents <- filter( parents, Gender == "Female" & Type %in% validTypes )
+maleParents <- filter( parents, Gender == "Male" & Type %in% validTypes )
+
+numMaleParents <- length(maleParents$Gender)
+numFemaleParents <- length(femaleParents$Gender)
+
+totalParents <- numMaleParents+numFemaleParents
+avgPerINTP <- round(totalParents / length(surveyINTP$ID), 1)
+```
+
+In the survey, respondents are asked to give information about their parents. In total, MBTI personality types were provided for `r totalParents` individuals that are parents to INTP respondents. This accounts for `r avgPerINTP` parents reported per INTP.
+
+### Female Parent Figures
+
+As you can see below, female parents of INTPs tend to be ISFJ, ISTJ, INFJ, and ESFJ. It appears that very few INTPs have mothers who are _also_ INTPs!
+
+```{r echo=FALSE}
+ggplot( femaleParents, aes( x=reorder(Type, Type, function(x)-length(x)), y=(..count..)/sum(..count..), fill = Type ) ) +
+  geom_bar() +
+  ggtitle( paste("Female Parent Types, Total Reported:", numFemaleParents), subtitle = "Personality types for mothers of INTPs" ) +
+  scale_x_discrete("Personality Types") +
+  scale_y_continuous("", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  guides(fill=FALSE) +
+  labs(caption=tableCaption)
+```
+
+
+### Male Parent Figures
+
+Contrary to female parent figures, more fathers of INTPs also tend to be INTPs themselves, followed in frequency by ISTJ and ISTP. This is particularly interesting as, in general, female INTPs signficantly outweigh male INTPs throughout the rest of the data.
+
+```{r echo=FALSE}
+ggplot( maleParents, aes( x=reorder(Type, Type, function(x)-length(x)), y=(..count..)/sum(..count..), fill = Type ) ) +
+  geom_bar() +
+  ggtitle( paste("Male Parent Types, Total Reported:", numMaleParents), subtitle = "Personality types for fathers of INTPs" ) +
+  scale_x_discrete("Personality Types") +
+  scale_y_continuous("", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  guides(fill=FALSE) +
+  labs(caption=tableCaption)
+```
+
+## MBTI Personalities and Romance
+
+Going in, it is again important to note that the highest amounts of information we have are for INTPs. What we are looking for is patterns in frequent pairings. Due to the imbalance of data for INTPs, one cannot assume that these patterns apply evenly for other types of MBTI personality types.
+
+
+
+
