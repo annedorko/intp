@@ -1,0 +1,33 @@
+# Permalinks
+permalink:           pretty
+
+# Setup
+title:               Being an INTP
+tagline:             Musings and Facts About Being an INTP
+description:         INTPs could rule the world. Only, we can’t keep the same plan for more than 36 hours.
+url:                 https://annedorko.github.io/intp
+paginate:            1
+baseurl:             "/"
+
+# Assets
+#
+# We specify the directory for Jekyll so we can use @imports.
+sass:
+  sass_dir:          _sass
+  style:            :compressed
+
+# About/contact
+author:
+  name:              Anne Dorko
+  url:               https://twitter.com/annedorko
+  email:             anne@withoutboxes.com
+
+# Custom vars
+version:             2.0.0
+github:
+  repo:              https://github.com/poole/poole
+
+# Gems
+gems:
+  - jekyll-paginate
+  - jekyll-gist

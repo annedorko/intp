@@ -1,6 +1,8 @@
 ---
 title: "INTP General Survey Analysis 2017"
 output:
+  md_document:
+    variant: markdown_github
   html_document: default
   pdf_document: default
 ---

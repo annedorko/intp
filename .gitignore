@@ -2,3 +2,4 @@ analysis.html
 *.DS_Store*
 *.RData*
 *.Rhistory*
+docs/_site/
