@@ -1,1 +1,4 @@
 analysis.html
+*.DS_Store*
+*.RData*
+*.Rhistory*

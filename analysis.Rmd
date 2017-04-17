@@ -1,15 +1,19 @@
 ---
 title: "INTP General Survey Analysis 2017"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 This was written for the [Being an INTP Facebook Page](https://facebook.com/INTP.info) by [Anne Dorko](https://www.annedorko.com).
 
-If you know your MBTI Personality type, you can contribute to the dataset by [completing the survey](https://anne274.typeform.com/to/ycfkp1). New survey submissions are regularly cleaned and fed through this analysis for the highest quality results. All numbers and reports below are based on the latest cleaned data.
+If you know your MBTI Personality type, you can contribute to the dataset by [completing the survey](https://anne274.typeform.com/to/ycfkp1). Data is kept anonymous. New survey submissions are regularly cleaned and fed through this analysis for the highest quality results. All numbers and reports below are based on the latest cleaned data.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(error = TRUE)
 # Load libraries
+library("plyr")
 library("dplyr")
 library("ggplot2")
 library("scales")
@@ -39,7 +43,7 @@ This data is primarily for fun, and cannot be considered scientific. That said, 
 
 `r whoTookPercentage`% of the respondents were INTP, which is not represenative of the general popualation. Because of this, the otherwise general results are heavily weighted towards any INTP tendencies. Notes have been made through this page to let you know when INTPs have been completely isolated to run INTP-specific analysis. 
 
-You can also see that more females than males took this survey. We do not have enough data to determine whether this means INTPs are more likely to be women, as our sample is a convenience sample and not a true random sample.
+You can also see that more females than males took this survey. We do not have enough data to determine whether this means INTPs are more likely to be women, as our sample is a convenience sample and not a true random sample. 
 
 ```{r echo=FALSE}
 sortGenderAssigned <- filter(survey, GenderAssigned != '')
@@ -71,6 +75,8 @@ ggplot( survey, aes( x=WhoAssignedType, y=(..count..)/sum(..count..), fill = Who
   guides(fill=FALSE) +
   labs(caption=tableCaption)
 ```
+
+Now that these disclaimers are out of the way, let's dive in. I'll use authoritative language as if this were a scientifically accurate survey, but you should take it with a grain of salt.
 
 ## The Parents of an INTP
 
@@ -133,8 +139,259 @@ ggplot( maleParents, aes( x=reorder(Type, Type, function(x)-length(x)), y=(..cou
 
 ## MBTI Personalities and Romance
 
-Going in, it is again important to note that the highest amounts of information we have are for INTPs. What we are looking for is patterns in frequent pairings. Due to the imbalance of data for INTPs, one cannot assume that these patterns apply evenly for other types of MBTI personality types.
+Going in, it is again important to remember that the highest amounts of information we have are for INTPs. What we are looking for is patterns in frequent pairings. Due to the imbalance of data for INTPs, one cannot assume that these patterns apply evenly for other types of MBTI personality types.
+
+
+```{r echo=FALSE}
+areDating <- prop.table(table(surveyINTP$PartnerGender))
+notDating <- round(areDating[1], 3)*100
+areDating <- 100 - notDating
+```
+
+Of those who took the survey, `r notDating`% provided no relationship, meaning that `r areDating`% were in a relationship significant enough to report when they submitted their information.
+
+### Sexual Attraction and Orientation
+
+```{r echo=FALSE}
+# Prepare baseline data for pairings, include parents and survey takers for maximum data
+parentPairs <- filter( survey, Parent1Type %in% validTypes & Parent2Type %in% validTypes )
+basePairs <- filter( survey, Type %in% validTypes & PartnerType %in% validTypes & PartnerType != '' )
+
+parentPartners <- data.frame( parentPairs$Parent1Type, parentPairs$Parent1Gender, parentPairs$Parent2Type, parentPairs$Parent2Gender, stringsAsFactors = FALSE )
+basePartners <- data.frame( parentPairs$Type, parentPairs$GenderAssigned, parentPairs$PartnerType, parentPairs$PartnerGender, stringsAsFactors = FALSE )
+
+colnames( parentPartners ) <- c( "Partner1Type", "Partner1Gender", "Partner2Type", "Partner2Gender" )
+colnames( basePartners ) <- c( "Partner1Type", "Partner1Gender", "Partner2Type", "Partner2Gender" )
+
+allCouples <- bind_rows( parentPartners, basePartners )
+allCouples <- filter( allCouples, Partner1Type != '' & Partner2Type != '' )
+
+numCouples <- length(allCouples$Partner1Type)
+
+attractionData <- filter( survey, !is.na(Sexuality) & !is.na(Orientation) & !is.na(GenderIdentity) & GenderIdentity != '' & GenderAssigned != '')
+
+attractionData$Sexuality <- sapply( attractionData$Sexuality, function( sexuality ) {
+  # This makes for easier grouping, as the first three are essentially forms of asexuality
+  switch( sexuality,
+    'Aromantic Asexuality' = 'Asexual',
+    'Romantic Asexuality' = 'Asexual',
+    'Tertiary Sexuality' = 'Asexual',
+    'Secondary Sexuality' = 'Secondary',
+    'Primary Sexuality' = 'Primary',
+    'Hyper Sexuality' = 'Hyper'
+  )
+} )
+```
+
+Let's review overall sexuality and attraction. First, let’s take a look at sexual attraction, defined here as interest in having sexual activity with others. 
+
+```{r echo=FALSE}
+ggplot( attractionData, aes( x=reorder(Sexuality, Sexuality, function(x)-length(x)), y=(..count..)/sum(..count..), fill=GenderIdentity ) ) + 
+  geom_bar() +
+  ggtitle( "Level of Sexual Interest", subtitle = "What kind of sexual attraction is most often experienced?" ) +
+  scale_x_discrete("Sexual Interest Level") +
+  scale_y_continuous("", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(fill="Gender Identity", caption=tableCaption)
+```
+
+Next, let's look at sexual orientation. This is a sliding scale that measures how attracted people are to the same or opposite genders. Zero means only being attracted to the opposite gender, three is evenly bisexual, and six is exclusive attraction to the same gender. 
+
+```{r echo=FALSE}
+attrOrient <- filter( attractionData, Orientation %in% c(1:6) )
+attrOrientSimple <- data.frame( attrOrient$GenderAssigned, attrOrient$Orientation )
+attrOrientProps <- as.data.frame(prop.table(table(attrOrientSimple), 1))
+colnames(attrOrientProps) <- c("GenderAssigned", "Orientation", "Proportion")
+
+ggplot( attrOrientProps, aes( x=Orientation, y=as.numeric(Proportion), group=GenderAssigned, col=GenderAssigned ) ) +
+  geom_density(stat="identity") +
+  ggtitle( "Sexual Orientation and Assigned Gender", subtitle = "What are the sexual orientations of INTPs relative to assigned gender?" ) +
+  scale_y_continuous(labels = percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(col="Gender Assigned", caption=tableCaption, x = "Orientation Scale", y = "% of Orientation Given Gender")
+```
 
 
 
 
+```{r echo=FALSE}
+ggplot( filter(attractionData, Orientation %in% c(1:6)), aes( x=Orientation, y=reorder(Sexuality, Sexuality, function(x)-length(x)), col=GenderIdentity ) ) + 
+  # geom_density() +
+  # geom_dotplot() +
+  # geom_jitter() +
+  geom_jitter() +
+  ggtitle( "Sexual Orientation vs. Sexual Interest", subtitle = "Where do we fall on the orientation scale relative to our sex drives?" ) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(col="Gender Identity", caption=tableCaption, y="Sexual Interest", x="Orientation Scale")
+```
+
+We can see here that those who have non-binary gender identities seem to be attracted to multiple other genders.
+
+We now know that roughly half our respondents are straight and their relationships are most often driven by sexual motives. Let's take a look at the `r numCouples` couples whose data we have access to, and see how things shake out.
+
+Here's a collection of all the MBTI personality pairings we have to work with.
+
+```{r echo=FALSE}
+ggplot( allCouples, aes( x=Partner1Type, y=Partner2Type ) ) + 
+  geom_count() +
+  ggtitle( paste("MBTI Partner Pairs, Total Reported:", numCouples), subtitle = "Personality types in relationships." ) +
+  scale_x_discrete("Type") +
+  scale_y_discrete("Partner Type") +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_line(colour = "lightgray")) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  guides(fill=FALSE) +
+  labs( n="# Pairings", caption=tableCaption)
+```
+
+```{r echo=FALSE}
+# Base this on INTP couples as a base only
+intpCouples1 <- filter( allCouples, Partner1Type == 'INTP' )
+intpCouples2 <- filter( allCouples, Partner2Type == 'INTP' & Partner1Type != 'INTP' )
+colnames( intpCouples2 ) <-  c( "Partner2Type", "Partner2Gender", "Partner1Type", "Partner1Gender" )
+allIntpCouples <- bind_rows( intpCouples1, intpCouples2 )
+
+maleIntpPartners <- filter( allIntpCouples, Partner1Gender == 'Male' )
+femaleIntpPartners <- filter( allIntpCouples, Partner1Gender == 'Female' )
+
+numMaleIntpPartners <- length(maleIntpPartners$Partner1Type)
+numFemaleIntpPartners <- length(femaleIntpPartners$Partner1Type)
+```
+
+This is neat, but since most of our data is specific to INTPs, lets narrow this down to partner types that INTPs are usually found dating. We have `r length(allIntpCouples$Partner1Type)` to work with.
+
+### Male INTPs Tend to Date...
+
+The male INTP seems to favor INFPs the highest, followed by a fairly even turnout of ENFJ, ENFP, and ISFJ. While earlier we found that INTPs tend to have INTP fathers, INTP men are very rarely found dating another INTP.
+
+```{r echo=FALSE}
+# Graph, male INTPs tend to date...
+ggplot( maleIntpPartners, aes( x=reorder(Partner2Type, Partner2Type, function(x)-length(x)), y=(..count..)/sum(..count..), fill=Partner2Gender ) ) + 
+  geom_bar() +
+  ggtitle( paste("INTP Men's Partners, Total Reported:", numMaleIntpPartners), subtitle = "What personality types are INTP men most likely to date?" ) +
+  scale_x_discrete("Personality Types Being Dated") +
+  scale_y_continuous("Probability of Relationship", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(fill='Partner Gender',caption=tableCaption)
+```
+
+### Female INTPs Tend to Date...
+
+The female INTP seems to favor certain types a little more heavily, with preference for INTJ followed by other INTPs. Even the third preference is a hybrid of these first two: ENTJ.
+
+```{r echo=FALSE}
+# Graph, female INTPs tend to date...
+ggplot( femaleIntpPartners, aes( x=reorder(Partner2Type, Partner2Type, function(x)-length(x)), y=(..count..)/sum(..count..), fill=Partner2Gender ) ) + 
+  geom_bar() +
+  ggtitle( paste("INTP Women's Partners, Total Reported:", numFemaleIntpPartners), subtitle = "What personality types are INTP women most likely to date?" ) +
+  scale_x_discrete("Personality Types Being Dated") +
+  scale_y_continuous("Probability of Relationship", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(fill='Partner Gender',caption=tableCaption)
+```
+
+### Relationship Success Factors
+
+```{r echo=FALSE}
+yearsDating <- filter( surveyINTP, 
+                       PartnerGender != '' & PartnerAge != '' & !is.na(PartnerAge) & 
+                       !is.na(PartnerYearsDating) & PartnerYearsDating != '' & 
+                       !is.na(PartnerYearsKnown) & PartnerYearsKnown != '')
+numYearsDating <- length(yearsDating$Age)
+
+avgAges <- summary(yearsDating$Age)
+Qt1Age <- avgAges[2]
+Qt3Age <- avgAges[5]
+avgAge <- avgAges[3]
+```
+
+It's important to note that the average INTP respondent in a relationship is `r avgAge` years old. Our data is most representative of those between the ages of `r Qt1Age` and `r Qt3Age`. Given this, let's look at when the most successful relationships begin! 
+
+We'll define successful relationships as those lasting longer than three years, and we'll only look at relationships for those that fall between our typical age range as stated above. It appears that the majority of long-term relationships started quite young for INTPs who are currently older than `r Qt1Age` and younger than `r Qt3Age`. It is difficult to tell whether this is indicative of INTPs being good at finding a suitable mate and settling down early, but that seems to be what the data suggests.
+
+```{r echo=FALSE}
+longTermRels <- filter(yearsDating, PartnerYearsDating > 3 & Age > Qt1Age & Age < Qt3Age)
+numLongTermRels <- length(longTermRels$Age)
+ggplot( longTermRels, aes( x = Age - PartnerYearsDating, y=(..count..)/sum(..count..), binwidth=5, fill = GenderAssigned ) ) + 
+  geom_bar() +
+  ggtitle( paste("Age When Long-Term Relationships Begin, Total Reported:", numLongTermRels), subtitle = paste("When do INTPs between the ages of", paste(Qt1Age,Qt3Age,sep="-"),"begin 3+ year long relationships?") ) +
+  scale_x_continuous("Age When Relationship Started") +
+  scale_y_continuous("", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(fill='INTP Gender',caption=tableCaption)
+
+```
+
+So, are INTPs cautious about jumping into a relationship? Perhaps that is what makes them so successful at such a young age. Let's take a look at how long INTPs wait to start relationships. We'll exclude extreme outliers for those who knew each other over 15 years before dating in the following graph.
+
+```{r echo=FALSE}
+less15Years <- filter(yearsDating, PartnerYearsKnown - PartnerYearsDating < 15 )
+numLess15Years <- length(less15Years$Age)
+
+ggplot( less15Years, aes( x = PartnerYearsKnown - PartnerYearsDating,  y=(..count..)/sum(..count..), fill= GenderAssigned, bin=10 ) ) + 
+  geom_bar() +
+  ggtitle( paste("Years Before Beginning a Relationship, Total Reported:", numLess15Years), subtitle = "Excluding extreme cases, how long do INTPs wait to begin dating someone?" ) +
+  scale_x_continuous("Years After Meeting") +
+  scale_y_continuous("", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(fill='INTP Gender',caption=tableCaption)
+```
+
+```{r echo=FALSE}
+avgWaitTime <- summary(yearsDating$PartnerYearsKnown - yearsDating$PartnerYearsDating)
+avgWaitTime <- round(avgWaitTime[4],1)
+```
+
+Most INTPs begin dating immediately. For those who don't, on average, an INTP waits about `r avgWaitTime` years before dating someone. It doesn't seem that patience plays a huge role in whether a relationship worked out. The most successful relationships (meaning those lasting over three years) say that they met through organic means, such as church, school, or through their mutual friends and hobbies.
+
+Perhaps there are certain pairings that tend to last longer! Let's explore the pairings of the most successful relationships.
+
+```{r echo=FALSE}
+ggplot( longTermRels, aes( x=reorder(PartnerType, PartnerType, function(x)-length(x)), y=(..count..)/sum(..count..), fill= PartnerGender ) ) + 
+  geom_bar() +
+  ggtitle( paste("Top INTP Partner Pairs, Total Reported:", numLongTermRels), subtitle = "Which personality pairings are most successful for INTPs?" ) +
+  scale_x_discrete("Partner Type") +
+  scale_y_continuous("", labels=percent) +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_line(colour = "lightgray")) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(fill='Partner Gender',caption=tableCaption)
+```
+
+There doesn't seem to be a strong correlation between length of time waited to date vs. length of relationship, either. The average relationship length seems to be about `r round(mean(yearsDating$PartnerYearsDating),1)` years. The graph below indicates the longest relationships start between 1-5 years after meeting.
+
+```{r echo=FALSE}
+ggplot( yearsDating, aes( x = PartnerYearsDating,  y=PartnerYearsKnown - PartnerYearsDating, col= GenderAssigned, bin=10 ) ) + 
+  geom_jitter() +
+  ggtitle( paste("Relationship Length vs Time Before Relationship, Total Reported:", length(yearsDating$Age)), subtitle = "Excluding extreme cases, how long do INTPs wait to begin dating someone?" ) +
+  scale_x_continuous("Years Waited") +
+  scale_y_continuous("Years Dated") +
+  theme(axis.line = element_line(colour = "black")) +
+  theme(panel.grid.major = element_blank()) +
+  theme(panel.grid.minor = element_line(colour = "gray") ) +
+  theme(panel.background = element_blank()) +
+  labs(col='INTP Gender',caption=tableCaption)
+```
