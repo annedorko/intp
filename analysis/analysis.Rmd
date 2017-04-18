@@ -20,7 +20,7 @@ library("dplyr")
 library("ggplot2")
 library("scales")
 # Load in clean data (only use clean info!)
-survey <- read.csv("intp-general-survey-2017-CLEAN.csv", stringsAsFactors = FALSE)
+survey <- read.csv("intp-general-survey-2017.csv", stringsAsFactors = FALSE)
 validTypes <- c( "ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP",
                  "INTP", "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ",
                  "ENFJ", "ENTJ")
