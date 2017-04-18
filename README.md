@@ -1,7 +1,7 @@
-# INTP General Survey 2017
+# Being an INTP
 
-General survey for INTPs distributed in 2017.
+In 2009, I [started up](https://web-beta.archive.org/web/20091201000000*/intp.info) a website for INTPs, but promptly let the domain expire.
 
-Currently this is a work in progress, I just need a place to track everything as I go.
+However, the [Facebook](https://facebook.com/INTP.info) and [Twitter](https://twitter.com/intpinfo) page lived on! Now, I'm putting any future work related to these communities on GitHub, where it can live on forever regardless of how often I come back to keep things updated.
 
-Follow on [Facebook](https://facebook.com/INTP.info) or [Twitter](https://twitter.com/intpinfo) for more information.
+As with everything an INTP does... this is a work in progress that may not ever be completed.
