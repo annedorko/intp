@@ -33,11 +33,11 @@ Our data sample comes from followers of the [Being an INTP Facebook](https://fac
 
 Below, you can see the complete breakdown of respondents and gender.
 
-![](/public/images/2017-survey/respondent_genders-1.png)![](/public/images/2017-survey/respondent_genders-2.png)
+![]({{ site.baseurl }}/public/images/2017-survey/respondent_genders-1.png)![]({{ site.baseurl }}/public/images/2017-survey/respondent_genders-2.png)
 
 The majority of test takers were assigned their MBTI type through an online test or assigned it to themselves after reading through all 16 profiles. This means that our sample may or may not be 'true' INTPs (if such a thing exists). However, as this is only in good fun, for the sake of this study we will assume that the MBTI personality types are accurate.
 
-![](/public/images/2017-survey/who_assigned_type-1.png)
+![]({{ site.baseurl }}/public/images/2017-survey/who_assigned_type-1.png)
 
 Conclusion
 ----------
