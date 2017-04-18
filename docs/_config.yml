@@ -7,7 +7,7 @@ tagline:             Musings and Facts About Being an INTP
 description:         INTPs could rule the world. Only, we can’t keep the same plan for more than 36 hours.
 url:                 https://annedorko.github.io/
 paginate:            1
-baseurl:             "/intp/"
+baseurl:             "/intp"
 
 # Assets
 #
